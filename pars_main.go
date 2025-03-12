@@ -3,8 +3,7 @@ package main
 import (
 	"fmt"
 	"net/http"
-
-	"kod/Parsik/Parser"
+	// "kod/Parsik/Parser"
 )
 
 func home(w http.ResponseWriter, r *http.Request) {
@@ -21,5 +20,5 @@ func main() {
 	http.HandleFunc("/", home)
 	http.HandleFunc("/reg/", registration)
 	http.ListenAndServe(":8080", nil)
-	parser.Pars()
+	// parser.Pars()
 }
