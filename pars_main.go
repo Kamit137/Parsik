@@ -3,23 +3,25 @@ package main
 import (
 	"fmt"
 	"net/http"
+	"text/template"
 
 	"kod/Parsik/Site"
 )
 
 func home(w http.ResponseWriter, r *http.Request) {
-	fmt.Print(w, "Gooo")
-}
-
-func registration(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "registr")
+	tmpl, err := template.ParseFiles("less1/index2.html")
+	if err != nil {
+		http.Error(w, "Ошибка шаблона", http.StatusInternalServerError)
+		return
+	}
+	tmpl.Execute(w, "d")
 }
 
 func main() {
-	a := (pars_wb.Wb("https://www.wildberries.ru/catalog/73458197/detail.aspx"))
-	fmt.Print(a.Name, "\n", a.Price, "\n")
-	fmt.Println(pars_wb.ScrapeImageURLs("https://www.wildberries.ru/catalog/73458197/detail.aspx"))
+	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
+	a := wb_pars.Wb("https://www.wildberries.ru/catalog/73458197/detail.aspx")
+	fmt.Println(a.Name, "\n", a.Price)
+	fmt.Println(wb_pars.ScrapeImageURLs("https://www.wildberries.ru/catalog/73458197/detail.aspx"))
 	http.HandleFunc("/", home)
-	http.HandleFunc("/reg/", registration)
-	http.ListenAndServe(":8080", nil)
+	http.ListenAndServe(":8088", nil)
 }

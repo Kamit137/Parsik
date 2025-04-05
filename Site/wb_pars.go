@@ -1,4 +1,4 @@
-package pars_wb
+package wb_pars
 
 import (
 	"encoding/json"

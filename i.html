@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="css/font-awesome.min.css">
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: sans-serif;
+            padding: 0;
+            margin: 0;
+        }
+        .container {
+            width: 1170px;
+            margin: 0 auto;
+        }
+        .menu__inner {
+            margin: 25px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .nav1 {
+            display: flex;
+            list-style: none;
+            padding: 0;
+            margin: 0; 
+            border: #ffc744;
+        }
+        .nav1 li a {
+            text-transform: uppercase;
+            color: #999;
+            text-decoration: none;
+            padding: 20px 20px;
+        }
+        .nav1 li a:hover {
+            background-color: #ffc744;
+            color: #fff;
+            border-radius: 5px;
+        }
+        .nav3 {
+            display: flex;
+            list-style: none;
+            padding: 0;
+            margin: 0; 
+            border: #ffc744;
+        }
+        .nav3 li a {
+            text-transform: uppercase;
+            color: #999;
+            text-decoration: none;
+            padding: 10px 15px;
+            margin: 0 5px;
+        }
+        .nav3 li a:hover {
+            background-color: #ffc744;
+            color: #fff;
+            border-radius: 5px;
+        }
+        .search{
+            position: relative;
+            width: 60px;
+            height: 60px;
+            overflow: hidden;
+            border-radius: 60px;
+            box-shadow: 0 0 0 5px #ffc744;
+            transition: 0.5s;
+        }
+        .search .icon{
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 60px;
+            height: 60px;
+            border-radius: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 999;
+            cursor: pointer;
+        }
+        .search .icon::before{
+            position: absolute;
+            content: "";
+            height: 15px;
+            width: 15px;
+            border-radius: 50%;
+            border: 3px solid #ffc744;
+            transform: translate(-2px, -2px);
+        }
+        .search .icon::after{
+            position: absolute;
+            content: "";
+            height: 15px;
+            width: 3px;
+            background: #ffc744;
+            transform: translate(8px, 8px) rotate(-45deg);
+        }
+        .search.active{
+            width: 600px;
+        }
+        .search .input{
+            position: relative;
+            width: 300px;
+            height: 60px;
+            left: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .search .input input{
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: 0;
+            outline: 0;
+            font-size: 18px;
+            padding: 10px 0;
+        }
+        /* Стили для модальных окон */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .modal {
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            width: 400px;
+            max-width: 90%;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+            position: relative;
+        }
+        .modal h2 {
+            margin-bottom: 20px;
+            color: #333;
+            text-align: center;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #555;
+        }
+        .form-group input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        .submit-btn {
+            background-color: #ffc744;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            width: 100%;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 10px;
+        }
+        .submit-btn:hover {
+            background-color: #e6b33d;
+        }
+        .close-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: none;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            color: #999;
+        }
+        .close-btn:hover {
+            color: #333;
+        }
+        /* Стили для аватара пользователя */
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: #ffc744;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            cursor: pointer;
+            position: relative;
+        }
+        .user-menu {
+            position: absolute;
+            top: 50px;
+            right: 0;
+            background-color: white;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            display: none;
+            z-index: 100;
+            min-width: 150px;
+        }
+        .user-menu a {
+            display: block;
+            padding: 10px 15px;
+            color: #333;
+            text-decoration: none;
+        }
+        .user-menu a:hover {
+            background-color: #f5f5f5;
+        }
+        .user-container {
+            position: relative;
+        }
+        /* Анимации */
+        @keyframes modalFadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        .modal {
+            animation: modalFadeIn 0.3s;
+        }
+    </style>
+</head>
+<body>
+    <div class="menu">
+        <div class="container">
+            <div class="menu__inner">
+                <ul class="nav1">
+                    <li><a href="#">LOGO</a></li>
+                </ul>
+                <div class="search">
+                    <div class="icon"></div>
+                    <div class="input">
+                        <input type="text" placeholder="Вставте ссылку" id="mySearch">
+                    </div>
+                </div>
+                <ul class="nav3" id="authButtons">
+                    <li><a href="#" id="loginBtn">Войти</a></li>
+                    <li><a href="#" id="registerBtn">Регистрация</a></li>
+                </ul>
+                <div class="user-container" id="userContainer" style="display: none;">
+                    <div class="user-avatar" id="userAvatar"></div>
+                    <div class="user-menu" id="userMenu">
+                        <a href="#" id="profileBtn">Профиль</a>
+                        <a href="#" id="logoutBtn">Выход</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно для входа -->
+    <div class="modal-overlay" id="loginModal">
+        <div class="modal">
+            <button class="close-btn" id="closeLogin">&times;</button>
+            <h2>Вход в аккаунт</h2>
+            <form id="loginForm">
+                <div class="form-group">
+                    <label for="loginEmail">Email</label>
+                    <input type="email" id="loginEmail" required>
+                </div>
+                <div class="form-group">
+                    <label for="loginPassword">Пароль</label>
+                    <input type="password" id="loginPassword" required>
+                </div>
+                <button type="submit" class="submit-btn">Войти</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Модальное окно для регистрации -->
+    <div class="modal-overlay" id="registerModal">
+        <div class="modal">
+            <button class="close-btn" id="closeRegister">&times;</button>
+            <h2>Регистрация</h2>
+            <form id="registerForm">
+                <div class="form-group">
+                    <label for="registerName">Имя пользователя</label>
+                    <input type="text" id="registerName" required>
+                </div>
+                <div class="form-group">
+                    <label for="registerEmail">Email</label>
+                    <input type="email" id="registerEmail" required>
+                </div>
+                <div class="form-group">
+                    <label for="registerPassword">Пароль</label>
+                    <input type="password" id="registerPassword" required>
+                </div>
+                <div class="form-group">
+                    <label for="registerConfirmPassword">Подтвердите пароль</label>
+                    <input type="password" id="registerConfirmPassword" required>
+                </div>
+                <button type="submit" class="submit-btn">Зарегистрироваться</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const loginBtn = document.getElementById('loginBtn');
+            const registerBtn = document.getElementById('registerBtn');
+            const loginModal = document.getElementById('loginModal');
+            const registerModal = document.getElementById('registerModal');
+            const closeLogin = document.getElementById('closeLogin');
+            const closeRegister = document.getElementById('closeRegister');
+            const authButtons = document.getElementById('authButtons');
+            const userContainer = document.getElementById('userContainer');
+            const userAvatar = document.getElementById('userAvatar');
+            const userMenu = document.getElementById('userMenu');
+            const logoutBtn = document.getElementById('logoutBtn');
+            const profileBtn = document.getElementById('profileBtn');
+            
+            let currentUser = null;
+
+            // Открытие модального окна входа
+            loginBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                loginModal.style.display = 'flex';
+            });
+            
+            // Открытие модального окна регистрации
+            registerBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                registerModal.style.display = 'flex';
+            });
+            
+            // Закрытие модального окна входа
+            closeLogin.addEventListener('click', function() {
+                loginModal.style.display = 'none';
+            });
+            
+            // Закрытие модального окна регистрации
+            closeRegister.addEventListener('click', function() {
+                registerModal.style.display = 'none';
+            });
+            
+            // Закрытие при клике вне модального окна
+            window.addEventListener('click', function(e) {
+                if (e.target === loginModal) {
+                    loginModal.style.display = 'none';
+                }
+                if (e.target === registerModal) {
+                    registerModal.style.display = 'none';
+                }
+            });
+            
+            // Обработка формы входа
+            document.getElementById('loginForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                const email = document.getElementById('loginEmail').value;
+                const password = document.getElementById('loginPassword').value;
+                
+                // Здесь должна быть логика авторизации
+                // Для примера просто сохраняем имя пользователя
+                currentUser = {
+                    name: email.split('@')[0], // Берем часть до @ как имя
+                    email: email
+                };
+                
+                loginModal.style.display = 'none';
+                showUserAvatar();
+            });
+            
+            // Обработка формы регистрации
+            document.getElementById('registerForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                const name = document.getElementById('registerName').value;
+                const email = document.getElementById('registerEmail').value;
+                const password = document.getElementById('registerPassword').value;
+                const confirmPassword = document.getElementById('registerConfirmPassword').value;
+                
+                if (password !== confirmPassword) {
+                    alert('Пароли не совпадают!');
+                    return;
+                }
+                
+                // Здесь должна быть логика регистрации
+                // Для примера просто сохраняем данные пользователя
+                currentUser = {
+                    name: name,
+                    email: email
+                };
+                
+                registerModal.style.display = 'none';
+                showUserAvatar();
+            });
+            
+            // Показать аватар пользователя
+            function showUserAvatar() {
+                authButtons.style.display = 'none';
+                userContainer.style.display = 'block';
+                userAvatar.textContent = currentUser.name.charAt(0).toUpperCase();
+            }
+            
+            // Клик по аватару - показать/скрыть меню
+            userAvatar.addEventListener('click', function(e) {
+                e.stopPropagation();
+                userMenu.style.display = userMenu.style.display === 'block' ? 'none' : 'block';
+            });
+            
+            // Клик по кнопке "Профиль"
+            profileBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                userMenu.style.display = 'none';
+                alert(`Профиль пользователя:\nИмя: ${currentUser.name}\nEmail: ${currentUser.email}`);
+            });
+            
+            // Клик по кнопке "Выход"
+            logoutBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                currentUser = null;
+                userContainer.style.display = 'none';
+                authButtons.style.display = 'flex';
+                userMenu.style.display = 'none';
+            });
+            
+            // Закрытие меню при клике вне его
+            document.addEventListener('click', function() {
+                userMenu.style.display = 'none';
+            });
+        });
+        const icon = document.querySelector('.icon');
+        search = document.querySelector('.search');
+        const clear = document.querySelector('.clear');
+        icon.onclick = function()  {
+        search.classList.toggle('active');
+        };
+        clear.onclick = function()  {
+             document.getElementById('mySearch').value='';
+        };
+    </script>
+</body>
+</html>
