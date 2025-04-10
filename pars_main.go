@@ -5,7 +5,8 @@ import (
 	"net/http"
 	"text/template"
 
-	"kod/Parsik/Site"
+	"kod/Parsik/Sites/Ali"
+	"kod/Parsik/Sites/Wb"
 )
 
 func home(w http.ResponseWriter, r *http.Request) {
@@ -18,6 +19,7 @@ func home(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
+	ali.M()
 	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
 	a := wb_pars.Wb("https://www.wildberries.ru/catalog/73458197/detail.aspx")
 	fmt.Println(a.Name, "\n", a.Price)
