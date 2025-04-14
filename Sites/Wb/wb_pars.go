@@ -10,7 +10,6 @@ import (
 	"os"
 	"strconv"
 	"strings"
-	// "github.com/PuerkitoBio/goquery"
 )
 
 // ------------------------------------------------------------------
@@ -25,8 +24,9 @@ type Product struct {
 	SalePriceU int    `json:"salePriceU"`
 }
 type ProductInfo struct {
-	Name  string  `json:"name"`
-	Price float64 `json:"price"`
+	Name     string  `json:"name"`
+	Price    float64 `json:"price"`
+	ImageURL string  `json: imageUrl`
 }
 
 //-----------------------------------------------------
@@ -38,7 +38,7 @@ func fail(err error, message string) {
 }
 
 func Wb(productURL string) ProductInfo {
-	url, err := extractWildberriesCardURL(productURL, "card")
+	url, err := extractCardURL(productURL, "card")
 	result, err := http.Get(url)
 	fail(err, "request EB fail")
 
@@ -56,14 +56,15 @@ func Wb(productURL string) ProductInfo {
 	fail(err, "json parser")
 
 	productInfo := ProductInfo{
-		Name:  jsonData.Data.Products[0].Name,
-		Price: float64(jsonData.Data.Products[0].SalePriceU) / 100,
+		Name:     jsonData.Data.Products[0].Name,
+		Price:    float64(jsonData.Data.Products[0].SalePriceU) / 100,
+		ImageURL: ScrapeImageURLs(url),
 	}
 
 	return productInfo
 }
 
-func extractWildberriesCardURL(productURL string, variant string) (string, error) {
+func extractCardURL(productURL string, variant string) (string, error) {
 	parsedURL, err := url.Parse(productURL)
 	fail(err, "некорректный URL")
 
@@ -96,7 +97,7 @@ func extractWildberriesCardURL(productURL string, variant string) (string, error
 
 func ScrapeImageURLs(productURL string) string {
 	// https://basket-05.wbbasket.ru/vol734/part73458/73458197/images/c246x328/1.webp
-	art, err := extractWildberriesCardURL(productURL, "")
+	art, err := extractCardURL(productURL, "")
 	fail(err, "fail photo")
 	artI, err := strconv.Atoi(art)
 	fail(err, "fail int")

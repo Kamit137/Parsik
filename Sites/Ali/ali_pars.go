@@ -1,125 +1,109 @@
 package ali
 
 import (
-	"encoding/json"
 	"fmt"
-	"log"
-	// "net/url"
+	// "log"
+	"strconv"
 	"strings"
+	// "time"
 
 	"github.com/gocolly/colly"
 	"github.com/playwright-community/playwright-go"
 )
 
-// JSON - структура для aer_data
-type JSON struct {
-	Widgets []widget `json:"widgets"`
-}
-
-type widget struct {
-	WidgetID string   `json:"widgetId"`
-	Children []widget `json:"children"`
-	Props    props    `json:"props"`
-}
-
-type props struct {
-	Name    string  `json:"name"`
-	SkuInfo skuInfo `json:"skuInfo"`
-}
-
-type skuInfo struct {
-	PropertyList []propertyList `json:"propertyList"`
-	PriceList    []priceList    `json:"priceList"`
-}
-
-type propertyList struct {
-	Name   string          `json:"name"`
-	Values []propertyValue `json:"values"`
-	ID     string          `json:"id"`
-}
-
-type propertyValue struct {
-	Name string `json:"name"`
-	ID   string `json:"id"`
-}
-
-type priceList struct {
-	ActivityAmount activityAmount `json:"activityAmount"`
-	SkuId          string         `json:"skuId"`
-}
-
-type activityAmount struct {
-	Value    float64 `json:"value"`
-	Currency string  `json:"currency"`
-}
-
-func fail(err error, message string) {
-	if err != nil {
-		log.Fatalf("%s: %s", message, err)
-	}
-}
-
-func M() {
-	link := "https://aliexpress.ru/item/1005008579400145.html?sku_id=12000045808902946&spm=a2g2w.productlist.search_results.3.756e396aH5OdPx"
-	skuID := "12000045808902946"
-
-	// Используем Playwright для рендеринга страницы
+func getRenderedHTML(url string) (string, error) {
 	pw, err := playwright.Run()
-	fail(err, "playwright run failed")
-	browser, err := pw.Chromium.Launch()
-	fail(err, "browser launch failed")
+	if err != nil {
+		return "", fmt.Errorf("playwright launch error: %v", err)
+	}
+	defer pw.Stop()
+
+	browser, err := pw.Chromium.Launch(playwright.BrowserTypeLaunchOptions{
+		Headless: playwright.Bool(true),
+	})
+	if err != nil {
+		return "", fmt.Errorf("browser launch error: %v", err)
+	}
+	defer browser.Close()
+
 	page, err := browser.NewPage()
-	fail(err, "new page failed")
-	_, err = page.Goto(link)
-	fail(err, "page goto failed")
+	if err != nil {
+		return "", fmt.Errorf("new page error: %v", err)
+	}
 
-	// Получаем HTML страницы после рендеринга
-	// html, err := page.Content()
-	fail(err, "get content failed")
-
-	// Закрываем браузер
-	err = browser.Close()
-	fail(err, "browser close failed")
-	err = pw.Stop()
-	fail(err, "playwright stop failed")
-
-	// Парсим HTML с помощью Colly
-	c := colly.NewCollector()
-
-	c.OnHTML("#__AER_DATA__", func(e *colly.HTMLElement) {
-		var result JSON
-		err := json.Unmarshal([]byte(e.Text), &result)
-		fail(err, "JSON unmarshal failed")
-
-		for i := range result.Widgets {
-			findPrice(result.Widgets[i], skuID)
-		}
+	// Устанавливаем язык и регион
+	page.SetExtraHTTPHeaders(map[string]string{
+		"Accept-Language": "ru-RU,ru;q=0.9",
 	})
 
-	// Обработчик ошибок
-	c.OnError(func(r *colly.Response, err error) {
-		log.Printf("Request URL: %s failed with response: %v\nError: %v", r.Request.URL, r, err)
+	_, err = page.Goto(url, playwright.PageGotoOptions{
+		WaitUntil: playwright.WaitUntilStateNetworkidle,
+		Timeout:   playwright.Float(30000),
 	})
+	if err != nil {
+		return "", fmt.Errorf("navigation error: %v", err)
+	}
 
-	// Запускаем парсинг HTML, полученного от Playwright
-	c.Visit(link)
-
-	// Добавляем ожидание завершения всех горутин
-	c.Wait()
+	return page.Content()
 }
 
-func findPrice(w widget, skuID string) {
-	if strings.Contains(w.WidgetID, "SnowProductContextWidget") {
-		for _, price := range w.Props.SkuInfo.PriceList {
-			if price.SkuId == skuID {
-				fmt.Printf("Product: %s, Price: %.2f %s\n", w.Props.Name, price.ActivityAmount.Value, price.ActivityAmount.Currency)
-				return
-			}
-		}
+func ParseProduct(url string) (*JSON, error) {
+	html, err := getRenderedHTML(url)
+	if err != nil {
+		return nil, fmt.Errorf("render error: %v", err)
 	}
 
-	// Рекурсивно проверяем дочерние элементы
-	for _, child := range w.Children {
-		findPrice(child, skuID)
+	c := colly.NewCollector()
+	result := &JSON{Widgets: make([]Widget, 0)}
+
+	// Обновленные селекторы для AliExpress 2025
+	c.OnHTML("h1[itemprop='name']", func(e *colly.HTMLElement) {
+		result.Widgets = append(result.Widgets, Widget{
+			WidgetID: "title",
+			Props: Props{
+				Name: strings.TrimSpace(e.Text),
+			},
+		})
+	})
+
+	c.OnHTML("div[data-pl='product-price']", func(e *colly.HTMLElement) {
+		priceStr := strings.NewReplacer("₽", "", ",", "", " ", "").Replace(e.Text)
+		if price, err := strconv.Atoi(priceStr); err == nil {
+			result.Widgets = append(result.Widgets, Widget{
+				WidgetID: "price",
+				Props: Props{
+					SkuInfo: SkuInfo{
+						ActivityAmount: ActivityAmount{Value: price},
+					},
+				},
+			})
+		}
+	})
+
+	c.OnHTML("img[itemprop='image']", func(e *colly.HTMLElement) {
+		if img := e.Attr("src"); img != "" {
+			result.Widgets = append(result.Widgets, Widget{
+				WidgetID: "image",
+				Props: Props{
+					SkuInfo: SkuInfo{
+						SkuId: "https:" + strings.Split(img, "?")[0],
+					},
+				},
+			})
+		}
+	})
+
+	c.OnResponse(func(r *colly.Response) {
+		r.Body = []byte(html)
+	})
+
+	if err := c.Visit("http://localhost/render"); err != nil {
+		return nil, fmt.Errorf("parsing error: %v", err)
 	}
+
+	if len(result.Widgets) == 0 {
+		return nil, fmt.Errorf("no data found after rendering")
+	}
+
+	return result, nil
 }

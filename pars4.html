@@ -1,0 +1,806 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wildberries Parser</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #282A37;
+            --primary-shade: #2A2745;
+            --accent-gradient: linear-gradient(135deg, #D1E7C8 0%, #E3F0DC 100%);
+            --accent-color: #D1E7C8;
+            --accent-light: #E3F0DC;
+            --light-text: #FFFFFF;
+            --secondary-text: #B8B8D0;
+            --card-bg: rgba(40, 42, 55, 0.85);
+            --hover-color: #34324A;
+            --error-color: #FF9680;
+            --border-color: #4A475E;
+        }
+
+        * {
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            padding: 0;
+            margin: 0;
+        }
+
+        body {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-shade) 100%);
+            color: var(--light-text);
+            min-height: 100vh;
+        }
+
+        .container {
+            width: 1170px;
+            margin: 0 auto;
+            padding: 20px 0;
+        }
+
+        .menu__inner {
+            margin: 25px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: rgba(40, 42, 55, 0.9);
+            padding: 10px 20px;
+            border-radius: 15px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(209, 231, 200, 0.15);
+        }
+
+        .nav1 {
+            display: flex;
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            text-decoration: none;
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--light-text);
+            padding: 15px 20px;
+        }
+
+        .logo .tg {
+            display: inline-block;
+            width: 30px;
+            height: 30px;
+            background: var(--accent-gradient);
+            border-radius: 50%;
+            text-align: center;
+            line-height: 30px;
+            margin-right: 10px;
+            font-weight: bold;
+            color: #282A37;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+
+        .nav3 {
+            display: flex;
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .nav3 li a {
+            text-transform: uppercase;
+            color: var(--secondary-text);
+            text-decoration: none;
+            padding: 10px 20px;
+            margin: 0 5px;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+
+        .nav3 li a:hover {
+            background-color: rgba(209, 231, 200, 0.2);
+            color: var(--light-text);
+            border-radius: 30px;
+        }
+
+        .search {
+            position: relative;
+            width: 60px;
+            height: 60px;
+            overflow: hidden;
+            border-radius: 60px;
+            box-shadow: 0 0 0 2px rgba(209, 231, 200, 0.4);
+            transition: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            background: rgba(40, 42, 55, 0.7);
+        }
+
+        .search.active {
+            width: 600px;
+            box-shadow: 0 0 0 2px var(--accent-color);
+        }
+
+        .search .icon {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 60px;
+            height: 60px;
+            border-radius: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 999;
+            cursor: pointer;
+            background: var(--accent-gradient);
+            transition: all 0.5s;
+        }
+
+        .search .icon i {
+            font-size: 22px;
+            color: #282A37;
+            transition: all 0.3s;
+        }
+
+        .search.active .icon {
+            transform: scale(0.9);
+        }
+
+        .search .input {
+            position: relative;
+            width: 540px;
+            height: 60px;
+            left: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.3s 0.2s;
+        }
+
+        .search.active .input {
+            opacity: 1;
+        }
+
+        .search .input input {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: 0;
+            outline: 0;
+            font-size: 18px;
+            padding: 10px 20px;
+            background: transparent;
+            color: var(--light-text);
+        }
+
+        .search .input input::placeholder {
+            color: var(--secondary-text);
+        }
+
+        .parse-btn {
+            position: absolute;
+            right: 0;
+            top: 0;
+            height: 60px;
+            width: 100px;
+            background: var(--accent-gradient);
+            color: #282A37;
+            border: none;
+            border-radius: 0 30px 30px 0;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            display: none;
+            z-index: 1000;
+            transition: all 0.3s;
+            opacity: 0;
+            transform: translateX(20px);
+        }
+
+        .parse-btn:hover {
+            background: linear-gradient(135deg, #E3F0DC 0%, #D1E7C8 100%);
+        }
+
+        .parse-btn.active {
+            display: block;
+            animation: fadeInRight 0.3s 0.3s forwards;
+        }
+
+        @keyframes fadeInRight {
+            from {
+                opacity: 0;
+                transform: translateX(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .products-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 30px;
+            gap: 20px;
+        }
+
+        .product-card {
+            width: 800px;
+            background: var(--card-bg);
+            backdrop-filter: blur(8px);
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            padding: 25px;
+            display: flex;
+            gap: 25px;
+            transition: all 0.3s;
+            border: 1px solid rgba(209, 231, 200, 0.1);
+        }
+
+        .product-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+            border-color: rgba(209, 231, 200, 0.3);
+            background: var(--hover-color);
+        }
+
+        .product-image {
+            width: 200px;
+            height: 200px;
+            object-fit: contain;
+            border-radius: 10px;
+            background: white;
+            padding: 10px;
+        }
+
+        .product-info {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .product-name {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: var(--light-text);
+        }
+
+        .product-price {
+            font-size: 28px;
+            color: var(--accent-color);
+            font-weight: bold;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 40px 0;
+            font-size: 18px;
+            color: var(--secondary-text);
+        }
+
+        .spinner {
+            border: 4px solid rgba(209, 231, 200, 0.2);
+            border-radius: 50%;
+            border-top: 4px solid var(--accent-color);
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .error {
+            color: var(--error-color);
+            text-align: center;
+            margin: 40px 0;
+            display: none;
+            font-size: 18px;
+        }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal {
+            background: var(--primary-color);
+            border-radius: 15px;
+            padding: 30px;
+            width: 400px;
+            max-width: 90%;
+            color: var(--light-text);
+            position: relative;
+            border: 1px solid var(--accent-color);
+            box-shadow: 0 0 20px rgba(209, 231, 200, 0.2);
+            animation: modalFadeIn 0.3s;
+        }
+
+        @keyframes modalFadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-50px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .modal h2 {
+            color: var(--accent-color);
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: var(--secondary-text);
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 16px;
+            background: rgba(40, 42, 55, 0.8);
+            color: var(--light-text);
+            transition: all 0.3s;
+        }
+
+        .form-group input:focus {
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 3px rgba(209, 231, 200, 0.2);
+            outline: none;
+        }
+
+        .submit-btn {
+            width: 100%;
+            padding: 14px;
+            background: var(--accent-gradient);
+            color: #282A37;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 15px;
+            transition: all 0.3s;
+        }
+
+        .submit-btn:hover {
+            background: linear-gradient(135deg, #E3F0DC 0%, #D1E7C8 100%);
+            transform: translateY(-2px);
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            font-size: 24px;
+            cursor: pointer;
+            color: var(--secondary-text);
+            background: none;
+            border: none;
+            transition: color 0.3s;
+        }
+
+        .close-btn:hover {
+            color: var(--accent-color);
+        }
+
+        .user-container {
+            position: relative;
+            display: none;
+        }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            padding: 8px 15px;
+            border-radius: 30px;
+            transition: all 0.3s;
+            background: rgba(209, 231, 200, 0.1);
+        }
+
+        .user-profile:hover {
+            background: rgba(209, 231, 200, 0.2);
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--accent-gradient);
+            color: #282A37;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 18px;
+        }
+
+        .profile-text {
+            color: var(--light-text);
+            text-transform: uppercase;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .user-menu {
+            position: absolute;
+            top: 60px;
+            right: 0;
+            background: var(--primary-color);
+            backdrop-filter: blur(10px);
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            display: none;
+            z-index: 100;
+            min-width: 180px;
+            overflow: hidden;
+            border: 1px solid rgba(209, 231, 200, 0.2);
+        }
+
+        .user-menu a {
+            display: block;
+            padding: 12px 20px;
+            color: var(--light-text);
+            text-decoration: none;
+            transition: all 0.3s;
+        }
+
+        .user-menu a:hover {
+            background: rgba(209, 231, 200, 0.2);
+            color: var(--accent-color);
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .products-container {
+            animation: fadeInUp 0.8s ease-out;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="menu">
+        <div class="container">
+            <div class="menu__inner">
+                <ul class="nav1">
+                    <li><a href="#" class="logo"><span class="tg">WB</span>Parser</a></li>
+                </ul>
+                <div class="search">
+                    <div class="icon">
+                        <i class="fas fa-search"></i>
+                    </div>
+                    <div class="input">
+                        <input type="text" placeholder="Вставьте ссылку на товар Wildberries" id="mySearch">
+                        <button class="parse-btn" id="parseBtn">Парсить</button>
+                    </div>
+                </div>
+                <ul class="nav3" id="authButtons">
+                    <li><a href="#" id="loginBtn">Войти</a></li>
+                    <li><a href="#" id="registerBtn">Регистрация</a></li>
+                </ul>
+                <div class="user-container" id="userContainer">
+                    <div class="user-profile" id="userProfile">
+                        <div class="user-avatar" id="userAvatar"></div>
+                        <div class="profile-text">ПРОФИЛЬ</div>
+                    </div>
+                    <div class="user-menu" id="userMenu">
+                        <a href="#" id="profileBtn">Настройки</a>
+                        <a href="#" id="logoutBtn">Выход</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>Анализируем товар...</p>
+        </div>
+
+        <div class="error" id="error"></div>
+
+        <div class="products-container" id="productsContainer">
+            <!-- Карточки товаров будут добавляться сюда -->
+        </div>
+    </div>
+
+    <!-- Модальное окно входа -->
+    <div class="modal-overlay" id="loginModal">
+        <div class="modal">
+            <button class="close-btn" id="closeLogin">&times;</button>
+            <h2>Вход в аккаунт</h2>
+            <form id="loginForm">
+                <div class="form-group">
+                    <label for="loginEmail">Email</label>
+                    <input type="email" id="loginEmail" required>
+                </div>
+                <div class="form-group">
+                    <label for="loginPassword">Пароль</label>
+                    <input type="password" id="loginPassword" required>
+                </div>
+                <button type="submit" class="submit-btn">Войти</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Модальное окно регистрации -->
+    <div class="modal-overlay" id="registerModal">
+        <div class="modal">
+            <button class="close-btn" id="closeRegister">&times;</button>
+            <h2>Регистрация</h2>
+            <form id="registerForm">
+                <div class="form-group">
+                    <label for="registerName">Имя пользователя</label>
+                    <input type="text" id="registerName" required>
+                </div>
+                <div class="form-group">
+                    <label for="registerEmail">Email</label>
+                    <input type="email" id="registerEmail" required>
+                </div>
+                <div class="form-group">
+                    <label for="registerPassword">Пароль</label>
+                    <input type="password" id="registerPassword" required>
+                </div>
+                <div class="form-group">
+                    <label for="registerConfirmPassword">Подтвердите пароль</label>
+                    <input type="password" id="registerConfirmPassword" required>
+                </div>
+                <button type="submit" class="submit-btn">Зарегистрироваться</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Элементы интерфейса
+            const searchInput = document.getElementById('mySearch');
+            const parseBtn = document.getElementById('parseBtn');
+            const loading = document.getElementById('loading');
+            const error = document.getElementById('error');
+            const productsContainer = document.getElementById('productsContainer');
+            const icon = document.querySelector('.icon');
+            const search = document.querySelector('.search');
+
+            // Элементы авторизации
+            const loginBtn = document.getElementById('loginBtn');
+            const registerBtn = document.getElementById('registerBtn');
+            const loginModal = document.getElementById('loginModal');
+            const registerModal = document.getElementById('registerModal');
+            const closeLogin = document.getElementById('closeLogin');
+            const closeRegister = document.getElementById('closeRegister');
+            const authButtons = document.getElementById('authButtons');
+            const userContainer = document.getElementById('userContainer');
+            const userAvatar = document.getElementById('userAvatar');
+            const userMenu = document.getElementById('userMenu');
+            const logoutBtn = document.getElementById('logoutBtn');
+            const profileBtn = document.getElementById('profileBtn');
+
+            let currentUser = null;
+
+            // Поисковая строка
+            icon.onclick = function () {
+                search.classList.toggle('active');
+                if (search.classList.contains('active')) {
+                    searchInput.focus();
+                } else {
+                    searchInput.value = '';
+                    parseBtn.classList.remove('active');
+                }
+            };
+
+            // Активация кнопки "Парсить"
+            searchInput.addEventListener('input', function () {
+                parseBtn.classList.toggle('active', searchInput.value.trim() !== '');
+            });
+
+            // Парсинг товара
+            parseBtn.addEventListener('click', async function (e) {
+                e.preventDefault();
+                const url = searchInput.value.trim();
+
+                if (!url) return;
+
+                loading.style.display = 'block';
+                error.style.display = 'none';
+                productsContainer.innerHTML = '';
+
+                try {
+                    const response = await fetch(`/parse?url=${encodeURIComponent(url)}`);
+
+                    if (!response.ok) {
+                        throw new Error(`Ошибка сервера: ${response.status}`);
+                    }
+
+                    const data = await response.json();
+
+                    if (data.error) {
+                        throw new Error(data.error);
+                    }
+
+                    if (!data.name || data.price === undefined) {
+                        throw new Error("Некорректные данные товара");
+                    }
+
+                    addProductCard(data);
+                } catch (err) {
+                    error.textContent = "Ошибка: " + err.message;
+                    error.style.display = 'block';
+                    console.error("Ошибка при парсинге:", err);
+                } finally {
+                    loading.style.display = 'none';
+                }
+            });
+
+            // Добавление карточки товара
+            function addProductCard(product) {
+                const productCard = document.createElement('div');
+                productCard.className = 'product-card';
+
+                productCard.innerHTML = `
+                    <img src="${product.imageUrl || 'https://via.placeholder.com/200'}" 
+                         alt="${product.name}" 
+                         class="product-image"
+                         onerror="this.src='https://via.placeholder.com/200'">
+                    <div class="product-info">
+                        <div class="product-name">${product.name || 'Название товара'}</div>
+                        <div class="product-price">${product.price ? product.price.toLocaleString('ru-RU') + ' ₽' : 'Цена не указана'}</div>
+                    </div>
+                `;
+
+                productsContainer.prepend(productCard);
+
+                // Анимация появления новой карточки
+                productCard.style.opacity = '0';
+                productCard.style.transform = 'translateY(20px)';
+                setTimeout(() => {
+                    productCard.style.transition = 'all 0.5s ease';
+                    productCard.style.opacity = '1';
+                    productCard.style.transform = 'translateY(0)';
+                }, 10);
+            }
+
+            // Остальной код (авторизация, модальные окна)
+            loginBtn.addEventListener('click', function (e) {
+                e.preventDefault();
+                loginModal.style.display = 'flex';
+            });
+
+            registerBtn.addEventListener('click', function (e) {
+                e.preventDefault();
+                registerModal.style.display = 'flex';
+            });
+
+            closeLogin.addEventListener('click', function () {
+                loginModal.style.display = 'none';
+            });
+
+            closeRegister.addEventListener('click', function () {
+                registerModal.style.display = 'none';
+            });
+
+            window.addEventListener('click', function (e) {
+                if (e.target === loginModal) loginModal.style.display = 'none';
+                if (e.target === registerModal) registerModal.style.display = 'none';
+            });
+
+            document.getElementById('loginForm').addEventListener('submit', function (e) {
+                e.preventDefault();
+                const email = document.getElementById('loginEmail').value;
+                const password = document.getElementById('loginPassword').value;
+
+                currentUser = {
+                    name: email.split('@')[0],
+                    email: email
+                };
+
+                loginModal.style.display = 'none';
+                showUserAvatar();
+            });
+
+            document.getElementById('registerForm').addEventListener('submit', function (e) {
+                e.preventDefault();
+                const name = document.getElementById('registerName').value;
+                const email = document.getElementById('registerEmail').value;
+                const password = document.getElementById('registerPassword').value;
+                const confirmPassword = document.getElementById('registerConfirmPassword').value;
+
+                if (password !== confirmPassword) {
+                    alert('Пароли не совпадают!');
+                    return;
+                }
+
+                currentUser = {
+                    name: name,
+                    email: email
+                };
+
+                registerModal.style.display = 'none';
+                showUserAvatar();
+            });
+
+            function showUserAvatar() {
+                authButtons.style.display = 'none';
+                userContainer.style.display = 'flex';
+                userAvatar.textContent = currentUser.name.charAt(0).toUpperCase();
+            }
+
+            document.getElementById('userProfile').addEventListener('click', function (e) {
+                e.stopPropagation();
+                userMenu.style.display = userMenu.style.display === 'block' ? 'none' : 'block';
+            });
+
+            profileBtn.addEventListener('click', function (e) {
+                e.preventDefault();
+                userMenu.style.display = 'none';
+                alert(`Профиль пользователя:\nИмя: ${currentUser.name}\nEmail: ${currentUser.email}`);
+            });
+
+            logoutBtn.addEventListener('click', function (e) {
+                e.preventDefault();
+                currentUser = null;
+                userContainer.style.display = 'none';
+                authButtons.style.display = 'flex';
+                userMenu.style.display = 'none';
+            });
+
+            document.addEventListener('click', function () {
+                userMenu.style.display = 'none';
+            });
+        });
+    </script>
+</body>
+
+</html>
