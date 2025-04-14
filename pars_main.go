@@ -5,7 +5,7 @@ import (
 	// "fmt"
 	"net/http"
 	"text/template"
-	// ss
+	// ssss
 	// "kod/Parsik/Sites/Ali"
 	"kod/Parsik/Sites/Wb"
 )
