@@ -2,11 +2,9 @@ package main
 
 import (
 	"encoding/json"
-	// "fmt"
 	"net/http"
 	"text/template"
-	// ssss
-	// "kod/Parsik/Sites/Ali"
+
 	"kod/Parsik/Sites/Wb"
 )
 

@@ -629,6 +629,7 @@
             const profileBtn = document.getElementById('profileBtn');
 
             let currentUser = null;
+            let parsedProducts = []; // Массив для хранения спарсенных товаров
 
             // Поисковая строка
             icon.onclick = function () {
@@ -655,7 +656,6 @@
 
                 loading.style.display = 'block';
                 error.style.display = 'none';
-                productsContainer.innerHTML = '';
 
                 try {
                     const response = await fetch(`/parse?url=${encodeURIComponent(url)}`);
@@ -674,22 +674,38 @@
                         throw new Error("Некорректные данные товара");
                     }
 
-                    addProductCard(data);
+                    // Проверяем, нет ли уже такого товара в списке
+                    const productExists = parsedProducts.some(
+                        product => product.name === data.name && product.price === data.price
+                    );
+
+                    if (!productExists) {
+                        parsedProducts.unshift(data); // Добавляем новый товар в начало массива
+                        renderProducts(); // Перерисовываем список товаров
+                    }
                 } catch (err) {
                     error.textContent = "Ошибка: " + err.message;
                     error.style.display = 'block';
                     console.error("Ошибка при парсинге:", err);
                 } finally {
                     loading.style.display = 'none';
+                    searchInput.value = ''; // Очищаем поле ввода после парсинга
+                    parseBtn.classList.remove('active');
                 }
             });
 
-            // Добавление карточки товара
-            function addProductCard(product) {
-                const productCard = document.createElement('div');
-                productCard.className = 'product-card';
+            // Функция для отображения всех товаров
+            function renderProducts() {
+                // Очищаем контейнер перед перерисовкой
+                productsContainer.innerHTML = '';
 
-                productCard.innerHTML = `
+                // Добавляем все товары из массива
+                parsedProducts.forEach((product, index) => {
+                    const productCard = document.createElement('div');
+                    productCard.className = 'product-card';
+                    productCard.dataset.id = index; // Добавляем идентификатор
+
+                    productCard.innerHTML = `
                     <img src="${product.imageUrl || 'https://via.placeholder.com/200'}" 
                          alt="${product.name}" 
                          class="product-image"
@@ -697,19 +713,35 @@
                     <div class="product-info">
                         <div class="product-name">${product.name || 'Название товара'}</div>
                         <div class="product-price">${product.price ? product.price.toLocaleString('ru-RU') + ' ₽' : 'Цена не указана'}</div>
+                        <button class="remove-btn" data-id="${index}">
+                            <i class="fas fa-times"></i>
+                        </button>
                     </div>
                 `;
 
-                productsContainer.prepend(productCard);
+                    productsContainer.appendChild(productCard);
 
-                // Анимация появления новой карточки
-                productCard.style.opacity = '0';
-                productCard.style.transform = 'translateY(20px)';
-                setTimeout(() => {
-                    productCard.style.transition = 'all 0.5s ease';
-                    productCard.style.opacity = '1';
-                    productCard.style.transform = 'translateY(0)';
-                }, 10);
+                    // Анимация появления новой карточки
+                    if (index === 0) { // Анимируем только последнюю добавленную карточку
+                        productCard.style.opacity = '0';
+                        productCard.style.transform = 'translateY(20px)';
+                        setTimeout(() => {
+                            productCard.style.transition = 'all 0.5s ease';
+                            productCard.style.opacity = '1';
+                            productCard.style.transform = 'translateY(0)';
+                        }, 10);
+                    }
+                });
+
+                // Добавляем обработчики для кнопок удаления
+                document.querySelectorAll('.remove-btn').forEach(btn => {
+                    btn.addEventListener('click', function (e) {
+                        e.stopPropagation();
+                        const id = parseInt(this.dataset.id);
+                        parsedProducts.splice(id, 1); // Удаляем товар из массива
+                        renderProducts(); // Перерисовываем список
+                    });
+                });
             }
 
             // Остальной код (авторизация, модальные окна)
@@ -799,6 +831,32 @@
             document.addEventListener('click', function () {
                 userMenu.style.display = 'none';
             });
+
+            // Добавляем стиль для кнопки удаления
+            const style = document.createElement('style');
+            style.textContent = `
+            .remove-btn {
+                position: absolute;
+                right: 20px;
+                bottom: 20px;
+                background: rgba(255, 150, 128, 0.2);
+                border: none;
+                width: 30px;
+                height: 30px;
+                border-radius: 50%;
+                color: var(--error-color);
+                cursor: pointer;
+                transition: all 0.3s;
+            }
+            .remove-btn:hover {
+                background: rgba(255, 150, 128, 0.4);
+                transform: scale(1.1);
+            }
+            .product-info {
+                position: relative;
+            }
+        `;
+            document.head.appendChild(style);
         });
     </script>
 </body>
