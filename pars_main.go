@@ -4,7 +4,8 @@ import (
 	"encoding/json"
 	"net/http"
 	"text/template"
-
+	"strings"
+	"kod/Parsik/Sites/Ozon"
 	"kod/Parsik/Sites/Wb"
 )
 
@@ -53,7 +54,15 @@ func parseHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	product := wb_pars.Wb(url)
+	var product interface{}
+	if strings.Contains(url, "ozon.ru") {
+		product = Ozon.Ozon(url)
+	} else if strings.Contains(url, "wildberries.ru") {
+		product = wb_pars.Wb(url)
+	} else {
+		json.NewEncoder(w).Encode(map[string]string{"error": "Unsupported website"})
+		return
+	}
 
 	response := map[string]interface{}{
 		"name":     product.Name,
