@@ -9,9 +9,9 @@ from selenium.webdriver.support.ui import WebDriverWait
 import sys
 
 
-url = "https:///www.ozon.ru/product/sredstvo-dlya-mytya-posudy-synergetic-detskih-igrushek-c-aromatom-granata-5-l-antibakterialnoe-1436053626/"
+# url = "https:///www.ozon.ru/product/sredstvo-dlya-mytya-posudy-synergetic-detskih-igrushek-c-aromatom-granata-5-l-antibakterialnoe-1436053626/"
 
-# url = sys.argv[1]
+url = sys.argv[1]
 
 def collect_product_info(driver, url):
     product_id = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, '//div[contains(text(), "Артикул: ")]'))).text.split('Артикул: ')[1]

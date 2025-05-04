@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"text/template"
 	"strings"
-	"kod/Parsik/Sites/Ozon"
+	Ozon "kod/Parsik/Sites/Ozon"
 	"kod/Parsik/Sites/Wb"
 )
 
@@ -54,25 +54,17 @@ func parseHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var product interface{}
-	if strings.Contains(url, "ozon.ru") {
-		product = Ozon.Ozon(url)
-	} else if strings.Contains(url, "wildberries.ru") {
-		product = wb_pars.Wb(url)
-	} else {
-		json.NewEncoder(w).Encode(map[string]string{"error": "Unsupported website"})
-		return
-	}
+var product Ozon.ProductInfo
 
-	response := map[string]interface{}{
-		"name":     product.Name,
-		"price":    product.Price,
-		"imageUrl": product.ImageURL,
-		"rating":   4.5,
-		"seller":   "Wildberries",
-	}
+ if strings.Contains(url, "ozon.ru") {
+    product = Ozon.Ozon(url)
+  } else if strings.Contains(url, "wildberries.ru") {
+    product = wb_pars.Wb(url)
+  }
 
-	json.NewEncoder(w).Encode(response)
+
+
+	json.NewEncoder(w).Encode(product)
 }
 
 func main() {

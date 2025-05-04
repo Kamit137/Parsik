@@ -10,6 +10,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	 Ozon "kod/Parsik/Sites/Ozon"
 )
 
 // ------------------------------------------------------------------
@@ -23,11 +24,7 @@ type Product struct {
 	Name       string `json:"name"`
 	SalePriceU int    `json:"salePriceU"`
 }
-type ProductInfo struct {
-	Name     string  `json:"name"`
-	Price    float64 `json:"price"`
-	ImageURL string  `json: imageUrl`
-}
+
 
 //-----------------------------------------------------
 
@@ -37,7 +34,7 @@ func fail(err error, message string) {
 	}
 }
 
-func Wb(productURL string) ProductInfo {
+func Wb(productURL string) Ozon.ProductInfo{
 	url, err := extractCardURL(productURL, "card")
 	result, err := http.Get(url)
 	fail(err, "request EB fail")
@@ -55,13 +52,19 @@ func Wb(productURL string) ProductInfo {
 	err = json.Unmarshal(body, &jsonData)
 	fail(err, "json parser")
 
-	productInfo := ProductInfo{
+	priceFloat := float64(jsonData.Data.Products[0].SalePriceU) / 100
+	priceString := fmt.Sprintf("%.2f", priceFloat)
+
+	product := Ozon.ProductInfo{
 		Name:     jsonData.Data.Products[0].Name,
-		Price:    float64(jsonData.Data.Products[0].SalePriceU) / 100,
-		ImageURL: ScrapeImageURLs(url),
+		Price:    priceString, // Используем отформатированную строку
+		ImageURL: ScrapeImageURLs(productURL),
 	}
 
-	return productInfo
+	return product
+
+
+
 }
 
 func extractCardURL(productURL string, variant string) (string, error) {
