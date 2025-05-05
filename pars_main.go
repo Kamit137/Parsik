@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"encoding/json"
 	"net/http"
 	"text/template"
@@ -62,7 +63,7 @@ var product Ozon.ProductInfo
     product = wb_pars.Wb(url)
   }
 
-
+fmt.Println(product)
 
 	json.NewEncoder(w).Encode(product)
 }

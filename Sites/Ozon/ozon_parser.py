@@ -89,7 +89,8 @@ products_data = []
 
 
 data = collect_product_info(driver=driver, url=url)
-print(json.dumps(data, ensure_ascii=False, indent=2))
+json_string = json.dumps(data, ensure_ascii=False)
+print(json_string)
 
 driver.close()
 driver.quit()
