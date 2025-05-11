@@ -7,7 +7,8 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 import sys
-
+import os
+import glob  # Импортируем модуль glob
 
 # url = "https:///www.ozon.ru/product/sredstvo-dlya-mytya-posudy-synergetic-detskih-igrushek-c-aromatom-granata-5-l-antibakterialnoe-1436053626/"
 
@@ -19,7 +20,8 @@ def collect_product_info(driver, url):
     page_source = str(driver.page_source)
     soup = BeautifulSoup(page_source, 'lxml')
 
-    with open(f'product_{product_id}.html', 'w') as file:
+    file_path = f'product_{product_id}.html'
+    with open(file_path, 'w') as file:
         file.write(page_source)
 
     product_name = soup.find('div', attrs={"data-widget": 'webProductHeading'}).find(
@@ -91,6 +93,10 @@ products_data = []
 data = collect_product_info(driver=driver, url=url)
 json_string = json.dumps(data, ensure_ascii=False)
 print(json_string)
+
+# Удаление файлов, соответствующих маске
+for filename in glob.glob('product_*.html'):
+    os.remove(filename)
 
 driver.close()
 driver.quit()
