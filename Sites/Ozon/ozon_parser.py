@@ -1,5 +1,6 @@
 import json
 import time
+import string  # Не нужно вызывать string()
 import undetected_chromedriver as uc
 from bs4 import BeautifulSoup
 from selenium.webdriver.common.by import By
@@ -68,13 +69,15 @@ def collect_product_info(driver, url):
     except:
         image_url = None
 
+    #  УДАЛЯЕМ: 'Date': string(datetime.date.today()).strftime("%d.%m.%Y")
+    #  ЗАМЕНЯЕМ:
+    current_date = datetime.date.today() #  Получаем текущую дату
+    formatted_date = current_date.strftime("%Y-%m-%d") #  Форматируем дату в нужный формат
     product = {
         'Name': product_name,
 
-        'Price': [
-        {'Price': product_ozon_card_price.replace("\u2009","").replace("\u2009","").replace("₽",""),
-        'Date': string(datetime.date.today()).strftime("%d.%m.%Y")}
-        ]
+        'Price': [{'Price': product_ozon_card_price.replace("\u2009","").replace("\u2009","").replace("₽",""),
+        'Date': formatted_date}], # Используем отформатированную дату
 
         'Img': image_url,
     }

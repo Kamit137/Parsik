@@ -27,7 +27,7 @@ type Product struct {
 type User struct {
 	ID       int
 	Name     string
-	Password sring
+	Password string
 	Email    string
 }
 
@@ -91,7 +91,7 @@ fmt.Println(product)
 
 func main() {
 	db, err := sql.Open("sqlite3", "db.db")
-	if err != nu{
+	if err != nil{
 		fmt.Println(err)
 		return
 	}
