@@ -8,9 +8,9 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 import sys
 import os
-import glob  # Импортируем модуль glob
+import glob
+import datetime
 
-# url = "https:///www.ozon.ru/product/sredstvo-dlya-mytya-posudy-synergetic-detskih-igrushek-c-aromatom-granata-5-l-antibakterialnoe-1436053626/"
 
 url = sys.argv[1]
 
@@ -70,13 +70,13 @@ def collect_product_info(driver, url):
 
     product = {
         'Name': product_name,
-        # 'product_id': product_id,
-        'Price': product_ozon_card_price.replace("\u2009","").replace("\u2009","").replace("₽",""),
 
-        'imageURL': image_url,
+        'Price': [
+        {'Price': product_ozon_card_price.replace("\u2009","").replace("\u2009","").replace("₽",""),
+        'Date': string(datetime.date.today()).strftime("%d.%m.%Y")}
+        ]
 
-        # 'product_discount_price': product_discount_price.replace("\u2009","").replace("\u2009","").replace("₽",""),
-
+        'Img': image_url,
     }
 
 

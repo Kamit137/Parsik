@@ -2,6 +2,9 @@ package main
 
 import (
 	"fmt"
+	"database/sql"
+	"log"
+	_ "github.com/mattn/go-sqlite3"
 	"encoding/json"
 	"net/http"
 	"text/template"
@@ -9,6 +12,24 @@ import (
 	Ozon "kod/Parsik/Sites/Ozon"
 	"kod/Parsik/Sites/Wb"
 )
+
+type Price struct{
+	Price string
+	Date string
+}
+type Product struct {
+	Name        string
+	Price       []Price
+	Img string
+}
+
+
+type User struct {
+	ID       int
+	Name     string
+	Password sring
+	Email    string
+}
 
 func home(w http.ResponseWriter, r *http.Request) {
 	tmpl, err := template.ParseFiles("pars4.html")
@@ -55,7 +76,7 @@ func parseHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-var product Ozon.ProductInfo
+var product Ozon.Product
 
  if strings.Contains(url, "ozon.ru") {
     product = Ozon.Ozon(url)
@@ -69,6 +90,27 @@ fmt.Println(product)
 }
 
 func main() {
+	db, err := sql.Open("sqlite3", "db.db")
+	if err != nu{
+		fmt.Println(err)
+		return
+	}
+	defer db.Close()
+sqlStmt := `
+		CREATE TABLE IF NOT EXISTS base (
+			id INTEGER PRIMARY KEY,
+			name TEXT,
+			password TEXT,
+			email TEXT,
+			produkts TEXT
+		);
+	`
+	_, err = db.Exec(sqlStmt) // Выполнение SQL-запроса
+	if err != nil {
+		log.Printf("%q: %s\n", err, sqlStmt) // Выводим ошибку и сам запрос
+		return
+	}
+
 	http.HandleFunc("/", home)
 	http.HandleFunc("/parse", enableCORS(parseHandler))
 	http.ListenAndServe(":8080", nil)

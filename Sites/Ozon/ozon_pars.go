@@ -6,14 +6,18 @@ import (
 	"os/exec"
 )
 
-type ProductInfo struct {
-	Name     string  `json:"name"`
-	Price    string `json:"price"`
-	ImageURL string  `json:"imageUrl"`
+type Price struct{
+	Price string
+	Date string
+}
+type Product struct {
+	Name        string
+	Price       []Price
+	Img string
 }
 
-func Ozon(url string)ProductInfo {
- // url := "https:///www.ozon.ru/product/sredstvo-dlya-mytya-posudy-synergetic-detskih-igrushek-c-aromatom-granata-5-l-antibakterialnoe-1436053626/"
+
+func Ozon(url string)Product {
 	pythonScript := "/home/kamit/kod/Parsik/Sites/Ozon/ozon_parser.py" // Замените на фактический путь
 
 	cmd := exec.Command("python", pythonScript, url)
@@ -21,20 +25,20 @@ func Ozon(url string)ProductInfo {
 	if err != nil {
 		fmt.Println("Error executing Python script:", err)
 		fmt.Println("Output:", string(out))
-		return ProductInfo{}
+		return Product{}
 	}
 
 	// Преобразуем вывод Python-скрипта в строку JSON
 	jsonString := string(out)
 
-	// Создаем экземпляр структуры ProductInfo
-	var product ProductInfo
+	// Создаем экземпляр структуры Product
+	var product Product
 
-	// Распарсиваем JSON в структуру ProductInfo
-	if err := json.Unmarshal([]byte(jsonString), &product); err != nil {
+	err = json.Unmarshal([]byte(jsonString), &product)
+	if err != nil {
 		fmt.Println("JSON decode error:", err)
 		fmt.Println("JSON string:", jsonString) // Выводим JSON для отладки
-		return ProductInfo{}
+		return Product{}
 	}
 
 

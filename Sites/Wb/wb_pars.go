@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"time"
 	"strconv"
 	"strings"
 	 Ozon "kod/Parsik/Sites/Ozon"
@@ -34,7 +35,7 @@ func fail(err error, message string) {
 	}
 }
 
-func Wb(productURL string) Ozon.ProductInfo{
+func Wb(productURL string) Ozon.Product{
 	url, err := extractCardURL(productURL, "card")
 	result, err := http.Get(url)
 	fail(err, "request EB fail")
@@ -55,10 +56,10 @@ func Wb(productURL string) Ozon.ProductInfo{
 	priceFloat := float64(jsonData.Data.Products[0].SalePriceU) / 100
 	priceString := fmt.Sprintf("%.2f", priceFloat)
 
-	product := Ozon.ProductInfo{
+	product := Ozon.Product{
 		Name:     jsonData.Data.Products[0].Name,
-		Price:    priceString, // Используем отформатированную строку
-		ImageURL: ScrapeImageURLs(productURL),
+		Price:    []Ozon.Price{{Price: priceString, Date: time.Now().Format("02.01.2006"),},},
+		Img: ScrapeImageURLs(productURL),
 	}
 
 	return product
