@@ -11,7 +11,7 @@ import (
 	"time"
 	"strconv"
 	"strings"
-	 Ozon "kod/Parsik/Sites/Ozon"
+	 Ozon "Parsik/Sites/Ozon"
 )
 
 // ------------------------------------------------------------------
