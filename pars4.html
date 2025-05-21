@@ -647,7 +647,7 @@
                 parseBtn.classList.toggle('active', searchInput.value.trim() !== '');
             });
 
-            // Парсинг товара
+            // Парсинг товара (исправленная версия)
             parseBtn.addEventListener('click', async function (e) {
                 e.preventDefault();
                 const url = searchInput.value.trim();
@@ -658,6 +658,7 @@
                 error.style.display = 'none';
 
                 try {
+                    // Отправляем GET запрос для совместимости с рабочим вариантом
                     const response = await fetch(`/parse?url=${encodeURIComponent(url)}`);
 
                     if (!response.ok) {
@@ -670,17 +671,24 @@
                         throw new Error(data.error);
                     }
 
-                    if (!data.name || data.price === undefined) {
+                    // Проверяем структуру данных (совместимость с обоими вариантами)
+                    const productData = {
+                        name: data.Name || data.name || 'Неизвестный товар',
+                        price: data.Price?.[0]?.Price || data.price || 'Цена не указана',
+                        imageUrl: data.Img || data.img || 'https://via.placeholder.com/200'
+                    };
+
+                    if (!productData.name || !productData.price) {
                         throw new Error("Некорректные данные товара");
                     }
 
                     // Проверяем, нет ли уже такого товара в списке
                     const productExists = parsedProducts.some(
-                        product => product.name === data.name && product.price === data.price
+                        product => product.name === productData.name && product.price === productData.price
                     );
 
                     if (!productExists) {
-                        parsedProducts.unshift(data); // Добавляем новый товар в начало массива
+                        parsedProducts.unshift(productData); // Добавляем новый товар в начало массива
                         renderProducts(); // Перерисовываем список товаров
                     }
                 } catch (err) {
@@ -703,16 +711,18 @@
                 parsedProducts.forEach((product, index) => {
                     const productCard = document.createElement('div');
                     productCard.className = 'product-card';
-                    productCard.dataset.id = index; // Добавляем идентификатор
+                    productCard.dataset.id = index;
 
                     productCard.innerHTML = `
-                    <img src="${product.imageUrl || 'https://via.placeholder.com/200'}" 
-                         alt="${product.name}" 
+                    <img src="${product.imageUrl}"
+                         alt="${product.name}"
                          class="product-image"
                          onerror="this.src='https://via.placeholder.com/200'">
                     <div class="product-info">
-                        <div class="product-name">${product.name || 'Название товара'}</div>
-                        <div class="product-price">${product.price ? product.price.toLocaleString('ru-RU') + ' ₽' : 'Цена не указана'}</div>
+                        <div class="product-name">${product.name}</div>
+                        <div class="product-price">${typeof product.price === 'number' ?
+                            product.price.toLocaleString('ru-RU') + ' ₽' :
+                            product.price}</div>
                         <button class="remove-btn" data-id="${index}">
                             <i class="fas fa-times"></i>
                         </button>
@@ -722,7 +732,7 @@
                     productsContainer.appendChild(productCard);
 
                     // Анимация появления новой карточки
-                    if (index === 0) { // Анимируем только последнюю добавленную карточку
+                    if (index === 0) {
                         productCard.style.opacity = '0';
                         productCard.style.transform = 'translateY(20px)';
                         setTimeout(() => {
@@ -738,13 +748,13 @@
                     btn.addEventListener('click', function (e) {
                         e.stopPropagation();
                         const id = parseInt(this.dataset.id);
-                        parsedProducts.splice(id, 1); // Удаляем товар из массива
-                        renderProducts(); // Перерисовываем список
+                        parsedProducts.splice(id, 1);
+                        renderProducts();
                     });
                 });
             }
 
-            // Остальной код (авторизация, модальные окна)
+            // Обработчики модальных окон авторизации
             loginBtn.addEventListener('click', function (e) {
                 e.preventDefault();
                 loginModal.style.display = 'flex';
@@ -768,21 +778,56 @@
                 if (e.target === registerModal) registerModal.style.display = 'none';
             });
 
-            document.getElementById('loginForm').addEventListener('submit', function (e) {
+            // Обработчик формы входа
+            document.getElementById('loginForm').addEventListener('submit', async function (e) {
                 e.preventDefault();
                 const email = document.getElementById('loginEmail').value;
                 const password = document.getElementById('loginPassword').value;
 
-                currentUser = {
-                    name: email.split('@')[0],
-                    email: email
-                };
+                try {
+                    const response = await fetch('/login', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            email: email,
+                            password: password
+                        })
+                    });
 
-                loginModal.style.display = 'none';
-                showUserAvatar();
+                    if (!response.ok) {
+                        throw new Error('Ошибка авторизации');
+                    }
+
+                    const user = await response.json();
+                    currentUser = user;
+                    loginModal.style.display = 'none';
+                    showUserAvatar();
+
+                    // Загружаем товары пользователя после входа
+                    if (user.Products) {
+                        try {
+                            const userProducts = JSON.parse(user.Products);
+                            if (Array.isArray(userProducts)) {
+                                parsedProducts = userProducts.map(p => ({
+                                    name: p.Name || p.name,
+                                    price: p.Price?.[0]?.Price || p.price,
+                                    imageUrl: p.Img || p.img
+                                }));
+                                renderProducts();
+                            }
+                        } catch (e) {
+                            console.error('Ошибка загрузки товаров:', e);
+                        }
+                    }
+                } catch (err) {
+                    alert('Ошибка входа: ' + err.message);
+                }
             });
 
-            document.getElementById('registerForm').addEventListener('submit', function (e) {
+            // Обработчик формы регистрации
+            document.getElementById('registerForm').addEventListener('submit', async function (e) {
                 e.preventDefault();
                 const name = document.getElementById('registerName').value;
                 const email = document.getElementById('registerEmail').value;
@@ -794,21 +839,43 @@
                     return;
                 }
 
-                currentUser = {
-                    name: name,
-                    email: email
-                };
+                try {
+                    const response = await fetch('/register', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            username: name,
+                            email: email,
+                            password: password
+                        })
+                    });
 
-                registerModal.style.display = 'none';
-                showUserAvatar();
+                    if (!response.ok) {
+                        throw new Error('Ошибка регистрации');
+                    }
+
+                    currentUser = {
+                        name: name,
+                        email: email
+                    };
+                    registerModal.style.display = 'none';
+                    showUserAvatar();
+                    alert('Регистрация успешна!');
+                } catch (err) {
+                    alert('Ошибка регистрации: ' + err.message);
+                }
             });
 
+            // Показываем аватар пользователя после авторизации
             function showUserAvatar() {
                 authButtons.style.display = 'none';
                 userContainer.style.display = 'flex';
                 userAvatar.textContent = currentUser.name.charAt(0).toUpperCase();
             }
 
+            // Обработчики меню пользователя
             document.getElementById('userProfile').addEventListener('click', function (e) {
                 e.stopPropagation();
                 userMenu.style.display = userMenu.style.display === 'block' ? 'none' : 'block';
@@ -823,16 +890,18 @@
             logoutBtn.addEventListener('click', function (e) {
                 e.preventDefault();
                 currentUser = null;
+                parsedProducts = [];
                 userContainer.style.display = 'none';
                 authButtons.style.display = 'flex';
                 userMenu.style.display = 'none';
+                productsContainer.innerHTML = '';
             });
 
             document.addEventListener('click', function () {
                 userMenu.style.display = 'none';
             });
 
-            // Добавляем стиль для кнопки удаления
+            // Стиль для кнопки удаления
             const style = document.createElement('style');
             style.textContent = `
             .remove-btn {
@@ -847,6 +916,9 @@
                 color: var(--error-color);
                 cursor: pointer;
                 transition: all 0.3s;
+                display: flex;
+                align-items: center;
+                justify-content: center;
             }
             .remove-btn:hover {
                 background: rgba(255, 150, 128, 0.4);

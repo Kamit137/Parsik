@@ -11,9 +11,11 @@ import sys
 import os
 import glob
 import datetime
+import requests  # Import the requests library
 
 
 url = sys.argv[1]
+API_ENDPOINT = "/your_api_endpoint"  # Замените на реальный URL вашего API
 
 def collect_product_info(driver, url):
     product_id = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, '//div[contains(text(), "Артикул: ")]'))).text.split('Артикул: ')[1]
@@ -92,8 +94,16 @@ products_data = []
 
 
 data = collect_product_info(driver=driver, url=url)
-json_string = json.dumps(data, ensure_ascii=False)
-print(json_string)
+#json_string = json.dumps(data, ensure_ascii=False)
+#print(json_string)
+
+try:
+    response = requests.post(API_ENDPOINT, json=data) # Sending JSON directly
+    response.raise_for_status()  # Raises HTTPError for bad responses (4xx or 5xx)
+    print("Data sent successfully!")
+
+except requests.exceptions.RequestException as e:
+    print(f"Error sending data: {e}")
 
 # Удаление файлов, соответствующих маске
 for filename in glob.glob('product_*.html'):
