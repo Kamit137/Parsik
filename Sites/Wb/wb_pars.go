@@ -71,26 +71,19 @@ func Wb(productURL string) Ozon.Product{
 func extractCardURL(productURL string, variant string) (string, error) {
 	parsedURL, err := url.Parse(productURL)
 	fail(err, "некорректный URL")
-
-	// Извлекаем ID товара (nm) из параметров запроса
 	queryValues := parsedURL.Query()
 	nm := queryValues.Get("nm")
 
 	if nm == "" {
-		// Попробуем извлечь из пути, если нет в параметрах
 		pathParts := strings.Split(parsedURL.Path, "/")
 		if len(pathParts) > 2 {
-			lastPart := pathParts[len(pathParts)-2] // Use second to last element
-			// Проверяем, что последняя часть - это число (nm)
-
+			lastPart := pathParts[len(pathParts)-2]
 			nm = lastPart
 
 		} else {
 			return "", fmt.Errorf("не удалось извлечь ID товара (nm)")
 		}
 	}
-
-	// Формируем ссылку на карточку товара
 	cardURL := fmt.Sprintf("https://card.wb.ru/cards/detail?appType=1&curr=rub&dest=-1257786&spp=27&nm=%s", nm)
 	if variant == "card" {
 		return cardURL, nil
@@ -100,7 +93,6 @@ func extractCardURL(productURL string, variant string) (string, error) {
 }
 
 func ScrapeImageURLs(productURL string) string {
-	// https://basket-05.wbbasket.ru/vol734/part73458/73458197/images/c246x328/1.webp
 	art, err := extractCardURL(productURL, "")
 	fail(err, "fail photo")
 	artI, err := strconv.Atoi(art)

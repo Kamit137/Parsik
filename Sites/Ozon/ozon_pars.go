@@ -18,8 +18,7 @@ type Product struct {
 
 
 func Ozon(url string)Product {
-	pythonScript := "/home/kamit/kod/Parsik/Sites/Ozon/ozon_parser.py" // Замените на фактический путь
-
+	pythonScript := "/home/kamit/kod/Parsik/Sites/Ozon/ozon_parser.py"
 	cmd := exec.Command("python", pythonScript, url)
 	out, err := cmd.CombinedOutput()
 	if err != nil {
@@ -27,17 +26,12 @@ func Ozon(url string)Product {
 		fmt.Println("Output:", string(out))
 		return Product{}
 	}
-
-	// Преобразуем вывод Python-скрипта в строку JSON
 	jsonString := string(out)
-
-	// Создаем экземпляр структуры Product
 	var product Product
-
 	err = json.Unmarshal([]byte(jsonString), &product)
 	if err != nil {
 		fmt.Println("JSON decode error:", err)
-		fmt.Println("JSON string:", jsonString) // Выводим JSON для отладки
+		fmt.Println("JSON string:", jsonString)
 		return Product{}
 	}
 

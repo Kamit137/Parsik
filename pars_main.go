@@ -5,7 +5,7 @@ import (
     "io"
 
     "time"
-"fmt"
+    "fmt"
     "database/sql"
     "log"
     _ "github.com/mattn/go-sqlite3"
@@ -62,22 +62,16 @@ func enableCORS(next http.HandlerFunc) http.HandlerFunc {
 
 func parseHandler(w http.ResponseWriter, r *http.Request, db *sql.DB) {
     w.Header().Set("Content-Type", "application/json")
-
-    // Поддержка GET запросов для совместимости
     if r.Method == "GET" {
         url := r.URL.Query().Get("url")
         if url == "" {
             json.NewEncoder(w).Encode(map[string]string{"error": "URL is required"})
             return
         }
-
-        // Здесь должна быть ваша логика парсинга
-        product := ParseProduct(url) // Замените на вашу функцию парсинга
+        product := ParseProduct(url)
         json.NewEncoder(w).Encode(product)
         return
     }
-
-    // Обработка POST запросов
     var request struct {
         URL   string `json:"url"`
         Email string `json:"email"`
@@ -92,16 +86,12 @@ func parseHandler(w http.ResponseWriter, r *http.Request, db *sql.DB) {
         json.NewEncoder(w).Encode(map[string]string{"error": "URL is required"})
         return
     }
-
-    // Здесь должна быть ваша логика парсинга
     var product Ozon.Product
     if strings.Contains(request.URL, "ozon.ru") {
         product = Ozon.Ozon(request.URL)
     } else if strings.Contains(request.URL, "wildberries.ru") {
         product = wb_pars.Wb(request.URL)
     }
-
-    // Работа с базой данных (если email указан)
     if request.Email != "" {
         var productsJSON string
         err := db.QueryRow("SELECT products FROM users WHERE email = ?", request.Email).Scan(&productsJSON)
@@ -153,10 +143,7 @@ func imageProxyHandler(w http.ResponseWriter, r *http.Request) {
     w.Header().Set("Content-Type", resp.Header.Get("Content-Type"))
     io.Copy(w, resp.Body)
 }
-
-// Функция парсинга (замените на вашу реализацию)
 func ParseProduct(url string) Product {
-    // Ваша логика парсинга Ozon/Wildberries
     return Product{
         Name:  "Пример товара",
         Price: []Price{{Price: "1000", Date: time.Now().Format("2006-01-02")}},
@@ -176,9 +163,7 @@ func registerHandler(w http.ResponseWriter, r *http.Request, db *sql.DB) {
         http.Error(w, "Invalid request", http.StatusBadRequest)
         return
     }
-
-    // Хеширование пароля (рекомендуется использовать bcrypt)
-    hashedPassword := user.Password // В реальном проекте замените на хеш
+    hashedPassword := user.Password
 
     _, err := db.Exec("INSERT INTO users (username, email, password) VALUES (?, ?, ?)",
         user.Username, user.Email, hashedPassword)
@@ -211,7 +196,6 @@ func loginHandler(w http.ResponseWriter, r *http.Request, db *sql.DB) {
         return
     }
 
-    // Проверка пароля (в реальном проекте сравнение с хешем)
     if credentials.Password != user.Password {
         http.Error(w, "Invalid credentials", http.StatusUnauthorized)
         return
